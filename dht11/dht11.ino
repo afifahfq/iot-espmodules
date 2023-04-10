@@ -4,6 +4,7 @@
 
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include "time.h"
 
 const char* ssid = "Redmi Note 8";
 const char* password = "123456gh";
@@ -14,10 +15,14 @@ PubSubClient client(espClient);
 unsigned long lastMsgLampu = 0;
 unsigned long timewait = 10000; //every 15 minutes
 
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = 18000; /*GMT OFFSET +5 HOURS(18000 SEC)*/
+const int   daylightOffset_sec = 3600; /*1 hour daylight offset*/
+
 #define MSG_BUFFER_SIZE_DHT11 (50)
 char msgDHT11[MSG_BUFFER_SIZE_DHT11];
+char timeStringBuff[50]; //50 chars should be enough
 
-long int valueLampu = 0;
 float humi;
 float temp;
 
@@ -103,10 +108,16 @@ void loop() {
   }
   client.loop();
 
-  unsigned long nowLampu = millis();
-  if (nowLampu - lastMsgLampu > timewait) {
-    lastMsgLampu = nowLampu;
-    ++valueLampu;
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  struct tm timeinfo;
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+    client.loop();
+  } 
+  
+  if (timeinfo.tm_min % 2 == 0 ) {
+    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+    
     humi = dht.readHumidity();
     temp = dht.readTemperature();
     Serial.print("Temperature: ");
@@ -115,8 +126,18 @@ void loop() {
     Serial.print("Humidity: ");
     Serial.println(humi);
 
-    snprintf(msgDHT11, MSG_BUFFER_SIZE_DHT11, "Temperature: %fºC Humidity: %f", temp, humi);
+//    snprintf(msgDHT11, MSG_BUFFER_SIZE_DHT11, "%04d-%02d-%02d %02d:%02d:%02d",
+//         timeinfo.tm_year+1900, timeinfo.tm_mon+1,
+//         timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min,
+//         timeinfo.tm_sec);
+    snprintf(msgDHT11, MSG_BUFFER_SIZE_DHT11, "%04d-%02d-%02d %02d:%02d:%02d Temp:%.2fºC Hum:%.2f", 
+        timeinfo.tm_year+1900, timeinfo.tm_mon+1,
+        timeinfo.tm_mday, timeinfo.tm_hour, 
+        timeinfo.tm_min, timeinfo.tm_sec, 
+        temp, humi);
+//    snprintf(msgDHT11, MSG_BUFFER_SIZE_DHT11, "Temperature: %.2fºC Humidity: %.2f", temp, humi);
   }
 
   client.publish("/topic/mqtt/sensorDHT11/out", msgDHT11);
+  delay(59000);
 }
