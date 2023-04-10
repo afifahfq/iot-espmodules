@@ -6,8 +6,8 @@
 #include <PubSubClient.h>
 #include "time.h"
 
-const char* ssid = "Redmi Note 8";
-const char* password = "123456gh";
+const char* ssid = "HUAWEI-0C66";
+const char* password = "RDQJ32QET5R";
 const char* mqtt_server = "broker.mqtt-dashboard.com";
 
 WiFiClient espClient;
@@ -79,7 +79,7 @@ void reconnect() {
     clientId += String(random(0xffff), HEX);
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
-      client.subscribe("/topic/mqtt/sensorDHT11/in");
+      client.subscribe("/topic/mqtt/DHT11sensor/in");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -126,18 +126,14 @@ void loop() {
     Serial.print("Humidity: ");
     Serial.println(humi);
 
-//    snprintf(msgDHT11, MSG_BUFFER_SIZE_DHT11, "%04d-%02d-%02d %02d:%02d:%02d",
-//         timeinfo.tm_year+1900, timeinfo.tm_mon+1,
-//         timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min,
-//         timeinfo.tm_sec);
-    snprintf(msgDHT11, MSG_BUFFER_SIZE_DHT11, "%04d-%02d-%02d %02d:%02d:%02d Temp:%.2fºC Hum:%.2f", 
+    snprintf(msgDHT11, MSG_BUFFER_SIZE_DHT11, "%04d-%02d-%02d %02d:%02d Temp:%.3fºC Hum:%.3f", 
         timeinfo.tm_year+1900, timeinfo.tm_mon+1,
         timeinfo.tm_mday, timeinfo.tm_hour, 
-        timeinfo.tm_min, timeinfo.tm_sec, 
+        timeinfo.tm_min,
         temp, humi);
 //    snprintf(msgDHT11, MSG_BUFFER_SIZE_DHT11, "Temperature: %.2fºC Humidity: %.2f", temp, humi);
   }
 
-  client.publish("/topic/mqtt/sensorDHT11/out", msgDHT11);
+  client.publish("/topic/mqtt/DHT11sensor/out", msgDHT11);
   delay(59000);
 }
