@@ -12,8 +12,9 @@
 
 const char* ssid = "HUAWEI-0C66";
 const char* password = "RDQJ32QET5R";
-const char* mqtt_server = "tcp://0.tcp.ap.ngrok.io";
-const int mqtt_port = 16451;
+const char* mqtt_server = "broker.mqtt-dashboard.com";
+//const char* mqtt_server = "tcp://0.tcp.ap.ngrok.io";
+//const int mqtt_port = 16451;
 
 
 WiFiClient espClient;
@@ -90,7 +91,8 @@ void setup() {
   Serial.begin(9600);
 
   setup_wifi();
-  client.setServer(mqtt_server, mqtt_port);
+  client.setServer(mqtt_server, 1883);
+//  client.setServer(mqtt_server, mqtt_port);
   client.setKeepAlive(60);
   
   client.setCallback(callback);
@@ -125,7 +127,9 @@ void loop() {
         timeinfo.tm_min,
         analogValue);
 
-    client.publish("raw_data", msgDHT11, MQTTpubQos);
+
+    client.publish("/raw_data/out", msgDHT11);
+//    client.publish("raw_data", msgDHT11, MQTTpubQos);
     delay(590000);
   }
 }
